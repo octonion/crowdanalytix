@@ -1,0 +1,79 @@
+
+R version 2.15.3 (2013-03-01) -- "Security Blanket"
+Copyright (C) 2013 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library("BradleyTerry2")
+> 
+> library("RPostgreSQL")
+> 
+> drv <- dbDriver("PostgreSQL")
+> 
+> con <- dbConnect(drv,host="localhost",port="5432",dbname="cricket")
+> 
+> query <- dbSendQuery(con, "
++ select
++ g.team_won as outcome,
++ g.team_1 as team,
++ g.team_2 as opponent
++ from ipl.games g
++ where
++     extract(year from g.game_date) between 2011 and 2011
++ ;")
+> 
+> games <- fetch(query,n=-1)
+> dim(games)
+[1] 74  3
+> 
+> fit <- BTm(outcome,team,opponent,data=games)
+> fit
+Bradley Terry model fit by glm.fit 
+
+Call:  BTm(outcome = outcome, player1 = team, player2 = opponent, data = games)
+
+Coefficients:
+            ..Deccan Chargers             ..Delhi Daredevils  
+                      -1.2317                        -1.8319  
+            ..Kings XI Punjab         ..Kochi Tuskers Kerala  
+                      -0.9288                        -1.1204  
+      ..Kolkata Knight Riders               ..Mumbai Indians  
+                      -0.6635                        -0.4352  
+              ..Pune Warriors             ..Rajasthan Royals  
+                      -1.4742                        -1.0288  
+..Royal Challengers Bangalore  
+                      -0.1111  
+
+Degrees of Freedom: 74 Total (i.e. Null);  65 Residual
+Null Deviance:	    102.6 
+Residual Deviance: 92.77 	AIC: 110.8 
+> 
+> btl <- as.data.frame(BTabilities(fit))
+> btl[with(btl, order(-ability)), ]
+                               ability      s.e.
+Chennai Super Kings          0.0000000 0.0000000
+Royal Challengers Bangalore -0.1111136 0.6733204
+Mumbai Indians              -0.4352433 0.7525235
+Kolkata Knight Riders       -0.6634529 0.7318494
+Kings XI Punjab             -0.9288493 0.7758360
+Rajasthan Royals            -1.0287925 0.7509221
+Kochi Tuskers Kerala        -1.1203744 0.7567029
+Deccan Chargers             -1.2317128 0.7844132
+Pune Warriors               -1.4741619 0.7844048
+Delhi Daredevils            -1.8318859 0.8214207
+> 
+> quit("no")

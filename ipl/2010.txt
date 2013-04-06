@@ -1,0 +1,75 @@
+
+R version 2.15.3 (2013-03-01) -- "Security Blanket"
+Copyright (C) 2013 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library("BradleyTerry2")
+> 
+> library("RPostgreSQL")
+> 
+> drv <- dbDriver("PostgreSQL")
+> 
+> con <- dbConnect(drv,host="localhost",port="5432",dbname="cricket")
+> 
+> query <- dbSendQuery(con, "
++ select
++ g.team_won as outcome,
++ g.team_1 as team,
++ g.team_2 as opponent
++ from ipl.games g
++ where
++     extract(year from g.game_date) between 2010 and 2010
++ ;")
+> 
+> games <- fetch(query,n=-1)
+> dim(games)
+[1] 60  3
+> 
+> fit <- BTm(outcome,team,opponent,data=games)
+> fit
+Bradley Terry model fit by glm.fit 
+
+Call:  BTm(outcome = outcome, player1 = team, player2 = opponent, data = games)
+
+Coefficients:
+            ..Deccan Chargers             ..Delhi Daredevils  
+                      -0.4923                        -0.5253  
+            ..Kings XI Punjab        ..Kolkata Knight Riders  
+                      -1.6982                        -0.5253  
+             ..Mumbai Indians             ..Rajasthan Royals  
+                       0.2396                        -0.7936  
+..Royal Challengers Bangalore  
+                      -0.4801  
+
+Degrees of Freedom: 60 Total (i.e. Null);  53 Residual
+Null Deviance:	    83.18 
+Residual Deviance: 75.4 	AIC: 89.4 
+> 
+> btl <- as.data.frame(BTabilities(fit))
+> btl[with(btl, order(-ability)), ]
+                               ability      s.e.
+Mumbai Indians               0.2396311 0.6941878
+Chennai Super Kings          0.0000000 0.0000000
+Royal Challengers Bangalore -0.4801297 0.6985198
+Deccan Chargers             -0.4923338 0.6803632
+Kolkata Knight Riders       -0.5252999 0.7217261
+Delhi Daredevils            -0.5252999 0.7217261
+Rajasthan Royals            -0.7935515 0.7294484
+Kings XI Punjab             -1.6982473 0.8119979
+> 
+> quit("no")
